@@ -46,6 +46,7 @@ class Fusion(data.Dataset):
             print('INFO: Testing on {} frames'.format(self.generator.num_frames()))
 
     def prepare_data(self, dataset, folder_list):
+        # 把 3d position 從 世界座標 轉到 相機座標 (透過外參 -> 旋轉矩陣R & 平移向量t)
         for subject in folder_list:
             for action in dataset[subject].keys():
                 anim = dataset[subject][action]
@@ -53,7 +54,7 @@ class Fusion(data.Dataset):
                 positions_3d = []
                 for cam in anim['cameras']:
                     pos_3d = world_to_camera(anim['positions'], R=cam['orientation'], t=cam['translation'])
-                    pos_3d[:, 1:] -= pos_3d[:, :1] 
+                    pos_3d[:, 1:] -= pos_3d[:, :1] # Remove global offset, but keep trajectory in first position
                     positions_3d.append(pos_3d)
                 anim['positions_3d'] = positions_3d
 
@@ -64,6 +65,7 @@ class Fusion(data.Dataset):
         self.joints_left, self.joints_right = list(dataset.skeleton().joints_left()), list(dataset.skeleton().joints_right())
         keypoints = keypoints['positions_2d'].item()
 
+        # 讓 mocap 的 length 跟
         for subject in folder_list:
             assert subject in keypoints, 'Subject {} is missing from the 2D detections dataset'.format(subject)
             for action in dataset[subject].keys():

@@ -28,6 +28,16 @@ class Model(nn.Module):
         )
 
     def forward(self, x):
+        """
+        Args
+            B : Batch size
+            F : Number of frames
+            J : Number of joints
+            C : Channel size
+            x : concatenate the (x,y) coordinates of joints for each frame to 
+                " X_bar = R ^ (J*2) * N "
+                
+        """
         B, F, J, C = x.shape
         x = rearrange(x, 'b f j c -> b (j c) f').contiguous()
 

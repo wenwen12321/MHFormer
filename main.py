@@ -1,3 +1,8 @@
+# import sys
+# print(sys.path)
+# sys.path.append('~/MLcode/paperCode/MHFormer')
+# print(sys.path)
+
 import os
 import glob
 import torch
@@ -16,6 +21,20 @@ from model.mhformer import Model
 
 opt = opts().parse()
 os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu
+
+# single gpu
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+
+# multi-GPU
+# os.environ["CUDA_VISIBLE_DEVICE"]= '0, 1'
+# device_ids = [0, 1]
+
+# GPU flexible setting
+# opts.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# print(torch.cuda.is_available())
+# print(opts.device)
+
+
 
 def train(opt, actions, train_loader, model, optimizer, epoch):
     return step('train', opt, actions, train_loader, model, optimizer, epoch)
@@ -110,7 +129,11 @@ if __name__ == '__main__':
     test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=opt.batch_size,
                                                   shuffle=False, num_workers=int(opt.workers), pin_memory=True)
 
+    ## 初始化模型、資料平行化、用 cuda 執行
     model = Model(opt).cuda()
+    # model = nn.DataParallel(Model(opt), device_ids=device_ids)
+    # model = nn.DataParallel(Model(opt)) # # 默認使用所有的device_ids 
+    # model = model.cuda()
 
     model_dict = model.state_dict()
     if opt.reload:
@@ -127,6 +150,7 @@ if __name__ == '__main__':
     lr = opt.lr
     all_param += list(model.parameters())
 
+    # 初始化優化器
     optimizer = optim.Adam(all_param, lr=opt.lr, amsgrad=True)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.317, patience=5, verbose=True)
 

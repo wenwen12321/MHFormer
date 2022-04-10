@@ -23,7 +23,7 @@ class opts():
         self.parser.add_argument('--downsample', default=1, type=int)
         self.parser.add_argument('--subset', default=1, type=float)
         self.parser.add_argument('-s', '--stride', default=1, type=int)
-        self.parser.add_argument('--gpu', default='0', choices=['0', '1'], type=str, help='')
+        self.parser.add_argument('--gpu', default='0, 1', choices=['0', '1'], type=str, help='')
         self.parser.add_argument('--train', default=1)
         self.parser.add_argument('--test', action='store_true')
         self.parser.add_argument('--nepoch', type=int, default=21)
