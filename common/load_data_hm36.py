@@ -17,11 +17,11 @@ class Fusion(data.Dataset):
         self.test_list = opt.subjects_test.split(',')
         self.action_filter = None if opt.actions == '*' else opt.actions.split(',')
         self.downsample = opt.downsample
-        self.subset = opt.subset
+        self.subset = opt.subset # 1
         self.stride = opt.stride
-        self.crop_uv = opt.crop_uv
+        self.crop_uv = opt.crop_uv # 0
         self.test_aug = opt.test_augmentation
-        self.pad = opt.pad
+        self.pad = opt.pad # 175
         if self.train:
             self.keypoints = self.prepare_data(dataset, self.train_list)
             self.cameras_train, self.poses_train, self.poses_train_2d = self.fetch(dataset, self.train_list,
@@ -65,7 +65,6 @@ class Fusion(data.Dataset):
         self.joints_left, self.joints_right = list(dataset.skeleton().joints_left()), list(dataset.skeleton().joints_right())
         keypoints = keypoints['positions_2d'].item()
 
-        # 讓 mocap 的 length 跟
         for subject in folder_list:
             assert subject in keypoints, 'Subject {} is missing from the 2D detections dataset'.format(subject)
             for action in dataset[subject].keys():
@@ -74,15 +73,18 @@ class Fusion(data.Dataset):
                                                                                                          subject)
                 for cam_idx in range(len(keypoints[subject][action])):
 
+                    # We check for >= instead of == because some videos in H3.6M contain extra frames
                     mocap_length = dataset[subject][action]['positions_3d'][cam_idx].shape[0]
                     assert keypoints[subject][action][cam_idx].shape[0] >= mocap_length
 
                     if keypoints[subject][action][cam_idx].shape[0] > mocap_length:
+                        # Shorten sequence
                         keypoints[subject][action][cam_idx] = keypoints[subject][action][cam_idx][:mocap_length]
 
         for subject in keypoints.keys():
             for action in keypoints[subject]:
                 for cam_idx, kps in enumerate(keypoints[subject][action]):
+                    # Normalize camera frame
                     cam = dataset.cameras()[subject][cam_idx]
                     if self.crop_uv == 0:
                         kps[..., :2] = normalize_screen_coordinates(kps[..., :2], w=cam['res_w'], h=cam['res_h'])

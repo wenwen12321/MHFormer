@@ -20,7 +20,7 @@ from common.h36m_dataset import Human36mDataset
 from model.mhformer import Model
 
 opt = opts().parse()
-os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu
+# os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu
 
 # single gpu
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
@@ -128,9 +128,15 @@ if __name__ == '__main__':
     test_data = Fusion(opt=opt, train=False, dataset=dataset, root_path =root_path)
     test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=opt.batch_size,
                                                   shuffle=False, num_workers=int(opt.workers), pin_memory=True)
+    ## DataLoader 參數介紹:
+    ## torch.utils.data.DataLoader(dataset, batch_size, shuffle, num_workers, pin_memory)
+    # num_workers: 默认只使用一个 CPU 读取和处理数据。可以设置为 4、8、16 等参数。但线程数并不是越大越好。
+    #              多核处理需要把数据分发到每个 CPU，处理完成后需要从多个 CPU 收集数据
+
 
     ## 初始化模型、資料平行化、用 cuda 執行
     model = Model(opt).cuda()
+
     # model = nn.DataParallel(Model(opt), device_ids=device_ids)
     # model = nn.DataParallel(Model(opt)) # # 默認使用所有的device_ids 
     # model = model.cuda()
@@ -151,6 +157,7 @@ if __name__ == '__main__':
     all_param += list(model.parameters())
 
     # 初始化優化器
+    # Adam 有 amsgrad=True performance 會再好一點點
     optimizer = optim.Adam(all_param, lr=opt.lr, amsgrad=True)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.317, patience=5, verbose=True)
 
