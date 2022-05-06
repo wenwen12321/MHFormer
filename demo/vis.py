@@ -129,9 +129,12 @@ def showimage(ax, img):
 
 def get_pose3D(video_path, output_dir):
     args, _ = argparse.ArgumentParser().parse_known_args()
-    args.layers, args.channel, args.d_hid, args.frames = 3, 512, 1024, 351
+    # args.layers, args.channel, args.d_hid, args.frames = 3, 512, 1024, 351
+    args.layers, args.channel, args.d_hid, args.frames = 3, 512, 1024, 9
     args.pad = (args.frames - 1) // 2
-    args.previous_dir = 'checkpoint/pretrained'
+    # args.previous_dir = 'checkpoint/pretrained'
+    # args.previous_dir = 'checkpoint/0502_1904_36_9'
+    args.previous_dir = 'checkpoint/0502_1733_39_9'
     args.n_joints, args.out_joints = 17, 17
 
     ## Reload 

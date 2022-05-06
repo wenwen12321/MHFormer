@@ -24,6 +24,8 @@ opt = opts().parse()
 
 # single gpu
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+# os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+
 
 # multi-GPU
 # os.environ["CUDA_VISIBLE_DEVICE"]= '0, 1'
@@ -33,7 +35,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 # opts.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # print(torch.cuda.is_available())
 # print(opts.device)
-
+# print(torch.cuda.device_count())
+# print(torch.cuda.current_device())
 
 
 def train(opt, actions, train_loader, model, optimizer, epoch):
@@ -137,6 +140,7 @@ if __name__ == '__main__':
     ## 初始化模型、資料平行化、用 cuda 執行
     model = Model(opt).cuda()
 
+
     # model = nn.DataParallel(Model(opt), device_ids=device_ids)
     # model = nn.DataParallel(Model(opt)) # # 默認使用所有的device_ids 
     # model = model.cuda()
@@ -188,10 +192,6 @@ if __name__ == '__main__':
                 lr *= opt.lr_decay
 
     print(opt.checkpoint)
-
-
-
-
 
 
 
