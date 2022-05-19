@@ -17,11 +17,11 @@ class Fusion(data.Dataset):
         self.test_list = opt.subjects_test.split(',')
         self.action_filter = None if opt.actions == '*' else opt.actions.split(',')
         self.downsample = opt.downsample
-        self.subset = opt.subset
+        self.subset = opt.subset # 1
         self.stride = opt.stride
-        self.crop_uv = opt.crop_uv
+        self.crop_uv = opt.crop_uv # 0
         self.test_aug = opt.test_augmentation
-        self.pad = opt.pad
+        self.pad = opt.pad # 175
         if self.train:
             self.keypoints = self.prepare_data(dataset, self.train_list)
             self.cameras_train, self.poses_train, self.poses_train_2d = self.fetch(dataset, self.train_list,
@@ -46,6 +46,7 @@ class Fusion(data.Dataset):
             print('INFO: Testing on {} frames'.format(self.generator.num_frames()))
 
     def prepare_data(self, dataset, folder_list):
+        # 把 3d position 從 世界座標 轉到 相機座標 (透過外參 -> 旋轉矩陣R & 平移向量t)
         for subject in folder_list:
             for action in dataset[subject].keys():
                 anim = dataset[subject][action]
@@ -53,7 +54,7 @@ class Fusion(data.Dataset):
                 positions_3d = []
                 for cam in anim['cameras']:
                     pos_3d = world_to_camera(anim['positions'], R=cam['orientation'], t=cam['translation'])
-                    pos_3d[:, 1:] -= pos_3d[:, :1] 
+                    pos_3d[:, 1:] -= pos_3d[:, :1] # Remove global offset, but keep trajectory in first position
                     positions_3d.append(pos_3d)
                 anim['positions_3d'] = positions_3d
 
@@ -72,20 +73,59 @@ class Fusion(data.Dataset):
                                                                                                          subject)
                 for cam_idx in range(len(keypoints[subject][action])):
 
+                    # We check for >= instead of == because some videos in H3.6M contain extra frames
                     mocap_length = dataset[subject][action]['positions_3d'][cam_idx].shape[0]
                     assert keypoints[subject][action][cam_idx].shape[0] >= mocap_length
 
                     if keypoints[subject][action][cam_idx].shape[0] > mocap_length:
+                        # Shorten sequence
                         keypoints[subject][action][cam_idx] = keypoints[subject][action][cam_idx][:mocap_length]
+
+################################################################################################################## start
+        ## original code:
+        # for subject in keypoints.keys():
+        #     for action in keypoints[subject]:
+        #         for cam_idx, kps in enumerate(keypoints[subject][action]):
+        #             # Normalize camera frame
+        #             cam = dataset.cameras()[subject][cam_idx]
+        #             if self.crop_uv == 0:
+        #                 kps[..., :2] = normalize_screen_coordinates(kps[..., :2], w=cam['res_w'], h=cam['res_h'])
+        #             keypoints[subject][action][cam_idx] = kps
+ ################################################################################################################## end      
+
+################################################################################################################### start
+        ## add visibility score version: 
+
+        import pickle
+        print('Loading 2D keypoint visibility score...')
+        #the visibility scores are predicted by Alphapose
+        with open('dataset/score.pkl', 'rb') as f:
+            score = pickle.load(f)
+
 
         for subject in keypoints.keys():
             for action in keypoints[subject]:
                 for cam_idx, kps in enumerate(keypoints[subject][action]):
-                    cam = dataset.cameras()[subject][cam_idx]
-                    if self.crop_uv == 0:
-                        kps[..., :2] = normalize_screen_coordinates(kps[..., :2], w=cam['res_w'], h=cam['res_h'])
+                    # Normalize camera frame
+                    cam = dataset.cameras()[subject][cam_idx] #.cameras() will return self._camera (h36m_cameras_extrinsic_params)
+                    kps[..., :2] = normalize_screen_coordinates(kps[..., :2], w=cam['res_w'], h=cam['res_h'])
+                    kps = kps[:,:,:2]
+                    name = subject+'_'+action+'.'+str(cam_idx)
+                    # score.pkl includes the 2D keypoint visibility scores for S1, S5, S6, S7, S8, S9, S11 of H3.6M
+                    if subject in ["S1","S5","S6","S7","S8","S9","S11"]:
+                        s = score[name][:len(kps)]
+                        # occationally the visibility score loses one frame of a video, just pad it
+                        if len(score[name])< len(kps):
+                            s2 = [s]
+                            for i in range(len(kps)-len(score[name])):
+                                s2.append(s[-1:])
+                            s = np.concatenate(s2,0) # s.shape = [2843, 17]
+                        s = np.reshape(s, (len(s),np.shape(kps)[1],1)) # s.shape = [2843, 17, 1]; kps.shape = [2843, 17, 2]
+                        # concatenate the 2D keypoints and visibility scores, N*K*3
+                        kps = np.concatenate((kps,s),2) # new kps (2843, 17, 3) = 【kps (2843, 17, 2) concatenate s (2843, 17, 1)】
                     keypoints[subject][action][cam_idx] = kps
-        
+################################################################################################################### end
+
         return keypoints
 
     def fetch(self, dataset, subjects, subset=1, parse_3d_poses=True):

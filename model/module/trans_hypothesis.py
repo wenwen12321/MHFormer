@@ -176,32 +176,58 @@ class Transformer(nn.Module):
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, 3)]  
 
+        # self.blocks = nn.ModuleList([
+        #     Block(
+        #         dim=embed_dim, num_heads=h, mlp_hidden_dim=mlp_hidden_dim, qkv_bias=qkv_bias, qk_scale=qk_scale,
+        #         drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer)
+        #     for i in range(2)])
+
+        # self.part_blocks = nn.ModuleList([
+        #     Part_Block(
+        #         dim=embed_dim, num_heads=h, mlp_hidden_dim=mlp_hidden_dim, qkv_bias=qkv_bias, qk_scale=qk_scale,
+        #         drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[2], norm_layer=norm_layer)
+        #     for i in range(1)])
+
+        # self.Temporal_norm = norm_layer(embed_dim)
+
+############################################################################################################ start
         self.blocks = nn.ModuleList([
             Block(
-                dim=embed_dim, num_heads=h, mlp_hidden_dim=mlp_hidden_dim, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                dim=embed_dim*2, num_heads=h, mlp_hidden_dim=mlp_hidden_dim, qkv_bias=qkv_bias, qk_scale=qk_scale,
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[i], norm_layer=norm_layer)
             for i in range(2)])
 
         self.part_blocks = nn.ModuleList([
             Part_Block(
-                dim=embed_dim, num_heads=h, mlp_hidden_dim=mlp_hidden_dim, qkv_bias=qkv_bias, qk_scale=qk_scale,
+                dim=embed_dim*2, num_heads=h, mlp_hidden_dim=mlp_hidden_dim, qkv_bias=qkv_bias, qk_scale=qk_scale,
                 drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[2], norm_layer=norm_layer)
             for i in range(1)])
 
-        self.Temporal_norm = norm_layer(embed_dim)
+        self.Temporal_norm = norm_layer(embed_dim*2)        
+############################################################################################################ end        
 
-    def forward(self, x_1, x_2, x_3):
+    #def forward(self, x_1, x_2, x_3):
+    def forward(self, x_1, x_2, x_3, score):
         x_1 += self.Temporal_pos_embed_1
         x_2 += self.Temporal_pos_embed_2
         x_3 += self.Temporal_pos_embed_3
+
+################################################################################################################################# start
+        # print(f"After plus pos_embedding\nTo see temp shape of 'x_1*score'\n{(x_1*score).shape}\n\n concat x_1:\n{x_1.shape}") # [8 9 512]
+        x_1 = torch.cat([x_1, x_1*score], 2) # [16 9 512]
+        x_2 = torch.cat([x_2, x_2*score], 2)
+        x_3 = torch.cat([x_3, x_3*score], 2)
+################################################################################################################################# end
 
         x_1 = self.pos_drop_1(x_1)
         x_2 = self.pos_drop_2(x_2)
         x_3 = self.pos_drop_3(x_3)
 
+        # 這裡 Block 應該是 SHR
         for i, blk in enumerate(self.blocks):
             x_1, x_2, x_3 = self.blocks[i](x_1, x_2, x_3)
 
+        # 這裡 part_block 應該是 CHI
         x_1, x_2, x_3 = self.part_blocks[0](x_1, x_2, x_3)
 
         x = torch.cat([x_1, x_2, x_3], dim=2)

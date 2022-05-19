@@ -17,6 +17,9 @@ from model.mhformer import Model
 opt = opts().parse()
 os.environ["CUDA_VISIBLE_DEVICES"] = opt.gpu
 
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def train(opt, actions, train_loader, model, optimizer, epoch):
     return step('train', opt, actions, train_loader, model, optimizer, epoch)
 
@@ -36,6 +39,9 @@ def step(split, opt, actions, dataLoader, model, optimizer=None, epoch=None):
     for i, data in enumerate(tqdm(dataLoader, 0)):
         batch_cam, gt_3D, input_2D, action, subject, scale, bb_box, cam_ind = data
         [input_2D, gt_3D, batch_cam, scale, bb_box] = get_varialbe(split, [input_2D, gt_3D, batch_cam, scale, bb_box])
+
+        ## test put data to GPU
+        input_2D = input_2D.to(device)
 
         if split =='train':
             output_3D = model(input_2D) 
@@ -105,6 +111,7 @@ if __name__ == '__main__':
         train_data = Fusion(opt=opt, train=True, dataset=dataset, root_path=root_path)
         train_dataloader = torch.utils.data.DataLoader(train_data, batch_size=opt.batch_size,
                                                        shuffle=True, num_workers=int(opt.workers), pin_memory=True)
+        
 
     test_data = Fusion(opt=opt, train=False, dataset=dataset, root_path =root_path)
     test_dataloader = torch.utils.data.DataLoader(test_data, batch_size=opt.batch_size,

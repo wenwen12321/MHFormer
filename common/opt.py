@@ -23,6 +23,7 @@ class opts():
         self.parser.add_argument('--downsample', default=1, type=int)
         self.parser.add_argument('--subset', default=1, type=float)
         self.parser.add_argument('-s', '--stride', default=1, type=int)
+        # self.parser.add_argument('--gpu', default='0, 1', choices=['0', '1'], type=str, help='')
         self.parser.add_argument('--gpu', default='0', choices=['0', '1'], type=str, help='')
         self.parser.add_argument('--train', default=1)
         self.parser.add_argument('--test', action='store_true')
@@ -33,7 +34,7 @@ class opts():
         self.parser.add_argument('--large_decay_epoch', type=int, default=5)
         self.parser.add_argument('--workers', type=int, default=8)
         self.parser.add_argument('-lrd', '--lr_decay', default=0.95, type=float)
-        self.parser.add_argument('--frames', type=int, default=351)
+        self.parser.add_argument('--frames', type=int, default=9) # defult: 351
         self.parser.add_argument('--pad', type=int, default=175) 
         self.parser.add_argument('--reload', action='store_true')
         self.parser.add_argument('--checkpoint', type=str, default='')
