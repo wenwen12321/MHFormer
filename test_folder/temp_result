@@ -1,0 +1,21 @@
+## Evaluate result of "checkpoint/pretrained"
+## inference time: one and half hours
+
+===Action=== ==p#1 mm== =p#2 mm=
+Directions    39.17      31.64
+Discussion    43.06      34.92
+Eating        40.07      32.79
+Greeting      40.94      33.87
+Phoning       44.95      35.32
+Photo         51.16      39.66
+Posing        40.63      31.90
+Purchases     41.29      32.25
+Sitting       53.57      43.56
+SittingDown   60.37      48.98
+Smoking       43.71      36.32
+Waiting       41.12      32.58
+WalkDog       43.84      34.46
+Walking       29.76      23.82
+WalkTogether  30.59      25.09
+Average       42.95      34.48
+p1: 42.95, p2: 34.48

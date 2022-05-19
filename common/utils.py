@@ -153,7 +153,7 @@ def get_varialbe(split, target):
         for i in range(num):
             temp = Variable(target[i], requires_grad=False).contiguous().type(torch.cuda.FloatTensor)
             var.append(temp)
-    else:
+    else: # val 外層有 "with torch.no_grad()" 所以不會算 grad 也不做 backprop
         for i in range(num):
             temp = Variable(target[i]).contiguous().cuda().type(torch.cuda.FloatTensor)
             var.append(temp)

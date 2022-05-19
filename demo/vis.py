@@ -69,7 +69,9 @@ def show3Dpose(vals, ax):
     ax.set_xlim3d([-RADIUS+xroot, RADIUS+xroot])
     ax.set_ylim3d([-RADIUS+yroot, RADIUS+yroot])
     ax.set_zlim3d([-RADIUS_Z+zroot, RADIUS_Z+zroot])
-    ax.set_aspect('equal')
+    # ax.set_aspect('equal')
+    ax.set_aspect('auto')
+
 
     white = (1.0, 1.0, 1.0, 0.0)
     ax.xaxis.set_pane_color(white) 
@@ -127,9 +129,12 @@ def showimage(ax, img):
 
 def get_pose3D(video_path, output_dir):
     args, _ = argparse.ArgumentParser().parse_known_args()
-    args.layers, args.channel, args.d_hid, args.frames = 3, 512, 1024, 351
+    # args.layers, args.channel, args.d_hid, args.frames = 3, 512, 1024, 351
+    args.layers, args.channel, args.d_hid, args.frames = 3, 512, 1024, 9
     args.pad = (args.frames - 1) // 2
-    args.previous_dir = 'checkpoint/pretrained'
+    # args.previous_dir = 'checkpoint/pretrained'
+    # args.previous_dir = 'checkpoint/0502_1904_36_9'
+    args.previous_dir = 'checkpoint/0502_1733_39_9'
     args.n_joints, args.out_joints = 17, 17
 
     ## Reload 

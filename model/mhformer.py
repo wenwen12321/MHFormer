@@ -47,6 +47,10 @@ class Model(nn.Module):
             nn.BatchNorm1d(args.channel*6, momentum=0.1),
             ####### A easy way to implement weighted mean
             nn.Conv1d(args.channel*6, 3*args.out_joints, kernel_size=1)
+
+        #     nn.BatchNorm1d(args.channel*3, momentum=0.1),
+        #     ####### A easy way to implement weighted mean
+        #     nn.Conv1d(args.channel*3, 3*args.out_joints, kernel_size=1)
         )
 ############################################################################################################### end
 

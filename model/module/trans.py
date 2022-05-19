@@ -1,5 +1,4 @@
 import math
-import logging
 from functools import partial
 import torch
 import torch.nn as nn
@@ -69,6 +68,27 @@ class Block(nn.Module):
         return x
 
 class Transformer(nn.Module):
+    """
+    # Explain of 
+    # "partial" : https://www.geeksforgeeks.org/partial-functions-python/
+    # "nn.LayerNorm" : https://www.jb51.net/article/213383.htm
+    # "nn.Parameter" : https://blog.csdn.net/weixin_44966641/article/details/118730730
+    # "nn.Dropout" : https://blog.csdn.net/leviopku/article/details/120786990
+    # "nn.ModuleList" : https://blog.csdn.net/e01528/article/details/84397174
+
+    Args
+        embed_dim : number of frames
+        mlp_hidden_dim : number of frames * 2
+        length : n_joint * 2 (in ViT case, 第二個參數會是 num_patches+1)
+        depth (int): depth of transformer
+        h (int): number of attention heads
+        qkv_bias (bool): enable bias for qkv if True
+        qk_scale (float): override default qk scale of head_dim ** -0.5 if set
+        drop_rate (float): dropout rate
+        attn_drop_rate (float): attention dropout rate
+        drop_path_rate (float): stochastic depth rate
+        norm_layer: (nn.Module): normalization layer        
+    """
     def __init__(self, depth=3, embed_dim=512, mlp_hidden_dim=1024, h=8, drop_rate=0.1, length=27):
         super().__init__()
         drop_path_rate = 0.2

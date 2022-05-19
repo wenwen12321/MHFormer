@@ -1,0 +1,13 @@
+# ignore folder
+checkpoint/
+dataset/
+demo/
+
+# ignore file
+common_command.txt
+
+# __pycache__
+*__pycache__
+
+# .vscode
+.vscode
